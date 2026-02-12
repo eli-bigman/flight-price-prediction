@@ -1,0 +1,111 @@
+About Dataset
+Dataset Overview: Flight Price Dataset of Bangladesh
+Introduction
+The "Bangladesh Flight Fare Dataset" is a synthetic dataset comprising 57,000 flight records tailored to represent air travel scenarios originating from Bangladesh. This dataset simulates realistic flight fare dynamics, capturing key factors such as airline operations, airport specifics, travel classes, booking behaviors, and seasonal variations specific to Bangladesh’s aviation market. It is designed for researchers, data scientists, and analysts interested in flight fare prediction, travel pattern analysis, or machine learning/deep learning applications. By combining real-world inspired statistical distributions and aviation industry standards, this dataset provides a robust foundation for exploring flight economics in a South Asian context.
+
+Dataset Purpose
+This dataset aims to:
+
+Facilitate predictive modeling of flight fares, with "Total Fare (BDT)" as the primary target variable.
+Enable analysis of travel trends, including the impact of cultural festivals (e.g., Eid, Hajj) and booking timings on pricing.
+Serve as a training resource for machine learning (ML) and deep learning (DL) models, with sufficient sample size (50,000) and feature diversity for generalization.
+Provide a realistic yet synthetic representation of Bangladesh’s air travel ecosystem, blending domestic and international flight scenarios.
+Data Collection and Methodology
+The dataset is synthetically generated using Python, with its methodology rooted in real-world aviation data and statistical principles. Below is a detailed breakdown of its construction:
+
+1. Data Components
+Airlines:
+Count: 25 airlines (21 international, 4 domestic).
+Source: Compiled from Bangladesh Civil Aviation Authority and Airline History, including major carriers like Emirates, Qatar Airways, and Biman Bangladesh Airlines.
+Selection: Random uniform choice per flight record to reflect operational diversity.
+Airports:
+Source Airports: 8 domestic airports (e.g., DAC - Hazrat Shahjalal International Airport, Dhaka).
+Destination Airports: 20 airports (8 domestic + 12 international, e.g., DXB - Dubai International Airport).
+Coordinates: Sourced from World Airport Codes, used for distance calculations.
+Full Names: Added for readability, mapped via a dictionary (e.g., "DAC" → "Hazrat Shahjalal International Airport, Dhaka").
+Travel Classes: Economy, Business, First Class, standard across the industry, randomly assigned with uniform distribution.
+Booking Sources: Direct Booking, Travel Agency, Online Website, reflecting common methods, per Statista, with uniform random selection.
+Aircraft Types: Boeing 777, Airbus A320, Boeing 737, Boeing 787, Airbus A350, assigned based on flight distance, sourced from Boeing and Airbus.
+2. Key Calculations
+Distance:
+
+Method: Haversine formula calculates great-circle distance:
+a = sin²(Δφ/2) + cos(φ₁) cos(φ₂) sin²(Δλ/2)
+c = 2 arctan2(√a, √(1-a))
+d = R · c, R = 6371 km
+Purpose: Determines flight duration, aircraft type, and stopovers.
+
+Source: Wikipedia - Haversine Formula.
+
+Flight Duration:
+
+Formula: Duration = max(d/s · U(0.9, 1.1), 0.5), where s is speed (300 km/h for <500 km, 600 km/h for 500-2000 km, 900 km/h for >2000 km), and U is uniform random variation.
+
+Source: Speeds adjusted from World Atlas, ensuring realism (e.g., DAC to CGP ~45 minutes).
+
+Fares:
+
+Base Fares:
+
+Domestic: Economy (2000-5000 BDT), Business (5000-10000 BDT), First Class (10000-15000 BDT).
+
+International: Economy (5000-70000 BDT), Business (15000-150000 BDT), First Class (25000-300000 BDT).
+
+Source: Derived from Trip.com and Expedia, e.g., DAC to LHR ~$380-600 (~41800-66000 BDT at 1 USD = 110 BDT).
+
+Adjustments:
+
+Seasonal multipliers (Regular: 1.0, Eid: 1.3, Hajj: 1.5, Winter: 1.2), per demand trends from Timeanddate.com.
+
+Days Before Departure: 20% discount (60+ days), 10% discount (30-59 days), 20% surge (<5 days), per Skyscanner.
+
+Taxes: Domestic: 200 BDT; International: 2000-6000 BDT + 15% base fare, per Bangladesh Civil Aviation Authority.
+
+Formula: Total Fare = (Base Fare · Multiplier · Discount/Surge) + Tax.
+
+3. Statistical Methods
+Random Sampling: Uniform distributions used for airline, class, booking source, and days before departure (1-90 days), ensuring even representation.
+Variability: Flight duration includes U(0.9, 1.1) to model real-world fluctuations (e.g., wind, routing).
+Stopovers: Probability-based (Direct: 100% for <1000 km, 70% for 1000-5000 km; 1 Stop: 30% for 1000-5000 km, 80% for >5000 km; 2 Stops: 20% for >5000 km), reflecting industry norms per FlightConnections.
+Dataset Structure
+Rows: 50,000 samples, sufficient for ML/DL training and statistical robustness.
+Columns: 17 features:
+Airline: Name of the operating airline (e.g., "Emirates").
+Source: IATA code of departure airport (e.g., "DAC").
+Source Name: Full name of departure airport (e.g., "Hazrat Shahjalal International Airport, Dhaka").
+Destination: IATA code of arrival airport (e.g., "LHR").
+Destination Name: Full name of arrival airport (e.g., "London Heathrow Airport").
+Departure Date & Time: Departure timestamp (e.g., "2025-03-15 14:30:00").
+Arrival Date & Time: Arrival timestamp (e.g., "2025-03-16 02:45:00").
+Duration (hrs): Flight duration in hours (e.g., 12.25).
+Stopovers: Number of stops (e.g., "Direct", "1 Stop").
+Aircraft Type: Aircraft model (e.g., "Boeing 777").
+Class: Travel class (e.g., "Economy").
+Booking Source: Booking method (e.g., "Online Website").
+Base Fare (BDT): Base ticket price in Bangladeshi Taka (e.g., 45000).
+Tax & Surcharge (BDT): Additional fees (e.g., 6750).
+Total Fare (BDT): Final price (e.g., 51750).
+Seasonality: Travel season (e.g., "Eid").
+Days Before Departure: Days between booking and departure (e.g., 45).
+File Format: CSV, ~10-15 MB, accessible via pandas.read_csv().
+Practical Applications
+Fare Prediction: Train regression models (e.g., Random Forest, Neural Networks) to predict "Total Fare (BDT)" using features like distance, class, and days before departure.
+Travel Analysis: Analyze seasonal fare trends or booking behaviors specific to Bangladesh, leveraging "Seasonality" and "Days Before Departure."
+Flight Optimization: Study stopover patterns or aircraft usage for route planning, using "Stopovers" and "Aircraft Type."
+Educational Use: Ideal for learning ML/DL techniques with a diverse, realistic dataset.
+Data Quality and Realism
+Realism: Incorporates real-world fare ranges, seasonal dates (adjusted for 2025), and aviation standards, validated against sources like Trip.com and Expedia.
+Limitations: Synthetic nature means exact fares or dates (e.g., Eid 2025) may differ slightly from real data; coordinates are approximate but sufficient for distance calculations.
+Validation: Duration aligns with actual flight times (e.g., DAC to CGP ~45 min), fares match market rates, and taxes follow regulatory guidelines.
+Usage Notes
+Target Variable: "Total Fare (BDT)" is recommended for fare prediction tasks.
+Preprocessing: Encode categorical variables (e.g., "Airline", "Class") for ML models; normalize numerical features like "Duration (hrs)" if needed.
+Visualization: Use "Source Name" and "Destination Name" for readable plots (e.g., bar charts of fares by airport).
+Acknowledgments
+This dataset was inspired by real-world flight data from Bangladesh and global aviation standards, with gratitude to resources like Bangladesh Civil Aviation Authority, World Airport Codes, and Trip.com for foundational data.
+
+License
+This dataset is shared under the [Creative Commons Attribution 4.0 International License (CC BY-SA 4.0)](CC BY-SA 4.0), allowing free use with attribution.
+
+Contact
+For questions or feedback, reach out via Kaggle or the dataset’s discussion section. Also, for the source code of the generation of this particular dataset is available in this github repository . Happy analyzing!
