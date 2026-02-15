@@ -11,4 +11,5 @@ joblib
 pydantic
 requests
 streamlit
+tenacity
 apache-airflow-providers-cncf-kubernetes
