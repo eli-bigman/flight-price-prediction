@@ -1,0 +1,8 @@
+2026-02-15 11:02:46,863 - __main__ - INFO - Starting data preprocessing...
+2026-02-15 11:02:47,074 - src.data_loader - INFO - Data loaded successfully from D:\xcode\Amalitech\flight price prediction\data\Flight_Price_Dataset_of_Bangladesh.csv
+2026-02-15 11:02:47,074 - src.data_loader - INFO - Shape: (57000, 17)
+2026-02-15 11:02:47,074 - __main__ - INFO - Standardizing column names...
+2026-02-15 11:02:47,130 - __main__ - INFO - Removed 0 duplicate rows.
+2026-02-15 11:02:47,177 - __main__ - INFO - Converted departure_date_and_time to datetime.
+2026-02-15 11:02:47,200 - __main__ - INFO - Converted arrival_date_and_time to datetime.
+2026-02-15 11:02:47,992 - __main__ - INFO - Cleaned data saved to D:\xcode\Amalitech\flight price prediction\data\processed\cleaned_data.csv
