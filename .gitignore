@@ -1,2 +1,4 @@
 *.md
 .venv
+models
+__pycache__/
