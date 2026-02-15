@@ -22,4 +22,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Run FastAPI app
-CMD ["uvicorn", "src.inference_api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.apps.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
