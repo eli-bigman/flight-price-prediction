@@ -1,9 +1,8 @@
-
 services:
   api:
     build: .
     container_name: flight-price-api
-    command: uvicorn src.inference_api:app --host 0.0.0.0 --port 8000
+    command: uvicorn src.apps.api.app:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     volumes:
@@ -16,7 +15,7 @@ services:
   ui:
     build: .
     container_name: flight-price-ui
-    command: streamlit run src/app.py --server.port 8501 --server.address 0.0.0.0
+    command: streamlit run src/apps/ui/app.py --server.port 8501 --server.address 0.0.0.0
     ports:
       - "8501:8501"
     environment:
