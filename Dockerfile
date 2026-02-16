@@ -6,14 +6,11 @@ WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copy source code and models
+# Copy source code and artifacts
 COPY src/ /app/src/
-COPY models/ /app/models/
-COPY dags/ /app/dags/ 
-# Copying dags as well just in case, though usually airflow runs separately.
-# For the inference API, we strictly need src and models.
+COPY artifacts/ /app/artifacts/
 
 # Set PYTHONPATH
 ENV PYTHONPATH=/app
