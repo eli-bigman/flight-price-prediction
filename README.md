@@ -12,41 +12,44 @@ The project simulates a professional data science workflow, encompassing data in
 - **Advanced Feature Engineering**: Creation of derived features like 'Day of Week', 'Journey Month', and seasonality indicators to capture temporal pricing trends.
 - **In-Depth EDA**: Visualizations revealing insights into price distributions across airlines, stops, and classes.
 - **Multi-Model Training**: Implementation and comparison of Linear Regression, Random Forest, and XGBoost models.
+- **Prediction Logging**: Automatic logging of all prediction requests and model results to a Postgres database for monitoring.
 - **Workflow Orchestration**: Design for an Airflow-managed pipeline (conceptually mapped) for automated data flow.
 - **Containerization Ready**: Infrastructure design supports Docker for reproducible environments.
 
 ## 🏗️ Architecture & Workflow
 
-The pipeline is designed to be modular and scalable. Below is the architectural flow, illustrating how data moves from ingestion to model inference, orchestrated by Airflow and containerized with Docker.
+The pipeline adopts a **Three-Tier Docker Architecture** to decouple the infrastructure, application, and orchestration layers. This ensures the database and app remain available even when the training jobs (Airflow) are not running.
 
 ```mermaid
 graph TD
-    subgraph Infrastructure ["Docker Compose"]
-        style Infrastructure fill:#095592,stroke:#333,stroke-width:2px
+    subgraph Network ["Docker Network: flight_network"]
+        style Network fill:#f5f5f5,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
 
-        subgraph Airflow ["Airflow DAG: flight_price_prediction"]
-            direction TB
+        subgraph Infrastructure ["Tier 1: Infrastructure (Always On)"]
+            style Infrastructure fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+            DB[("<b>Postgres DB</b><br><i>(flights_db)</i>")]
+            Vol[("Docker Volume<br><i>(db_data)</i>")]
+            DB --- Vol
+        end
 
-            T1["<b>Task: ingest_data</b><br/>PythonOperator<br/><i>(Pandas read_csv)</i>"]
-            T2["<b>Task: preprocess_data</b><br/>PythonOperator<br/><i>(Clean missing values, Outliers)</i>"]
-            T3["<b>Task: feature_engineering</b><br/>PythonOperator<br/><i>(OneHotEncoding, Scaling)</i>"]
-            T4["<b>Task: train_models</b><br/>PythonOperator<br/><i>(LinearReg, RandomForest, XGBoost)</i>"]
-            T5["<b>Task: evaluate_models</b><br/>PythonOperator<br/><i>(Calculate RMSE, R2, MAE)</i>"]
+        subgraph AppStack ["Tier 2: Application (Always On)"]
+            style AppStack fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+            UI["<b>Streamlit UI</b><br>(Port 8501)"]
+            API["<b>FastAPI Backend</b><br>(Port 8000)"]
 
-            T1 --> T2
-            T2 --> T3
-            T3 --> T4
-            T4 --> T5
+            UI -->|"HTTP /predict"| API
+            API -->|"SQL Queries"| DB
+        end
+
+        subgraph JobStack ["Tier 3: Orchestration (On Demand)"]
+            style JobStack fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+            Web["<b>Airflow Webserver</b><br>(Port 8080)"]
+            Sch["<b>Airflow Scheduler</b>"]
+
+            Web -.-|"Metadata Read/Write"| DB
+            Sch -.-|"Metadata Read/Write"| DB
         end
     end
-
-    %% Data flow annotations
-    D1[("Raw CSV")] -.-> T1
-    T3 -.-> D2[("Processed Data")]
-    T4 -.-> M[("Saved Models")]
-
-    classDef task fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-    class T1,T2,T3,T4,T5 task;
 ```
 
 ## 🛠️ Technology Stack
@@ -107,6 +110,22 @@ We trained multiple regression models to find the best fit:
 - **MAE (Mean Absolute Error)**
 - **R² Score**
 
+## 📡 Prediction Logging & Monitoring
+
+The application now includes a production-grade logging system. Every request to the `/predict` endpoint is saved to the **`prediction_logs`** table in the Postgres database.
+
+**Schema:**
+
+- **Input Features**: `source`, `destination`, `airline`, `departure_time`, etc.
+- **Output**: `predicted_price`
+- **Metadata**: `request_timestamp` and `model_refined_at` (tracks which model version was used).
+
+**Goal**: This data effectively creates a feedback loop, allowing you to monitor:
+
+1.  **Usage Patterns**: Most popular routes or airlines searched.
+2.  **Data Drift**: Shift in user inputs compared to training data.
+3.  **Model Performance**: Track predictions over time.
+
 ## 📂 Project Structure
 
 ```
@@ -122,8 +141,11 @@ flight-price-prediction/
 │   └── train.py            # Model training scripts
 ├── dags/
 │   └── flight_price_dag.py # Airflow DAG definition
-├── Dockerfile              # Docker image configuration
-├── docker-compose.yaml     # Service orchestration
+├── Dockerfile              # App Dockerfile
+├── Dockerfile.airflow      # Airflow Dockerfile
+├── docker-compose-db.yml   # Infrastructure (DB)
+├── docker-compose-app.yml  # Application (Streamlit + API)
+├── docker-compose-airflow.yml # Orchestration (Airflow)
 ├── requirements.txt        # Python dependencies
 └── README.md               # Project documentation
 ```
@@ -133,9 +155,42 @@ flight-price-prediction/
 ### Prerequisites
 
 - Python 3.8+
-- Docker & Docker Compose (optional, for Airflow)
+- Docker & Docker Compose
 
-### Local Setup
+### Docker Setup (Recommended)
+
+This project uses a modular Docker setup. Follow the order below:
+
+1.  **Create Shared Network & Infrastructure**:
+
+    ```bash
+    # Create the network
+    docker network create flight_network
+
+    # Start the Database (Tier 1)
+    docker-compose -f docker-compose-db.yml up -d
+    ```
+
+2.  **Start the Application**:
+
+    ```bash
+    # Start API and Streamlit UI (Tier 2)
+    docker-compose -f docker-compose-app.yml up -d
+    ```
+
+    - Access Streamlit UI: `http://localhost:8501`
+    - Access API Docs: `http://localhost:8000/docs`
+
+3.  **Run Airflow (On Demand)**:
+
+    ```bash
+    # Start Airflow Scheduler & Webserver (Tier 3)
+    docker-compose -f docker-compose-airflow.yml up -d
+    ```
+
+    - Access Airflow UI: `http://localhost:8080`
+
+### Local Setup (Non-Docker)
 
 1.  **Clone the repository**:
 
