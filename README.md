@@ -20,6 +20,8 @@ The project simulates a professional data science workflow, encompassing data in
 
 The pipeline adopts a **Three-Tier Docker Architecture** to decouple the infrastructure, application, and orchestration layers. This ensures the database and app remain available even when the training jobs (Airflow) are not running.
 
+![Architecture](image.png)
+
 ```mermaid
 graph TD
     subgraph Network ["Docker Network: flight_network"]
