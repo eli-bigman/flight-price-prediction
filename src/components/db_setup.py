@@ -38,7 +38,8 @@ prediction_logs = Table(
     Column('aircraft_type', String),
     Column('travel_class', String),
     Column('predicted_price', Float),
-    Column('model_refined_at', DateTime)
+    Column('model_refined_at', DateTime),
+    Column('model_version', String)
 )
 
 def init_db():
