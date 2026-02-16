@@ -6,3 +6,4 @@ logs
 artifacts
 .env
 .vscode
+!README.md
