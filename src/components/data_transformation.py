@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import joblib
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder
 from src.utils.exception import CustomException
 from src.utils.logger import get_logger
 from src.config.configuration import config
@@ -15,6 +16,9 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
         self.domestic_airports = ['DAC', 'CGP', 'ZYL', 'CXB', 'RJH', 'SPD', 'BZL', 'JSR']
         self.airline_brand_map = {}
         self.global_median_fare = 0
+        self.ohe = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        # Include airline to match notebook (Double Encoding: OHE + Target)
+        self.ohe_cols = ['airline', 'source', 'destination', 'aircraft_type']
 
     def fit(self, X, y=None):
         # Calculate Airline Brand Value (Target Encoding)
@@ -24,7 +28,7 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             temp_df = X.copy()
             temp_df['total_fare_bdt'] = y
             
-            # Key Logic from Notebook: Median fare per airline
+            # Match logic from notebook: Median fare per airline
             self.airline_brand_map = temp_df.groupby('airline')['total_fare_bdt'].median().to_dict()
             self.global_median_fare = y.median()
             
@@ -32,6 +36,13 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
             joblib.dump(self.airline_brand_map, config.ENCODER_DIR / "airline_brand_map.pkl")
             joblib.dump(self.global_median_fare, config.ENCODER_DIR / "global_median_fare.pkl")
             logger.info(f"Airline Brand Map calculated: {self.airline_brand_map}")
+            
+            # FIT OneHotEncoder on available columns
+            ohe_subset = [c for c in self.ohe_cols if c in X.columns]
+            if ohe_subset:
+                 self.ohe.fit(X[ohe_subset])
+                 joblib.dump(self.ohe, config.ENCODER_DIR / "ohe_encoder.pkl")
+                 logger.info(f"OneHotEncoder fitted on: {ohe_subset}")
         else:
             # Load if inference
             if os.path.exists(config.ENCODER_DIR / "airline_brand_map.pkl"):
@@ -39,7 +50,13 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
                 self.global_median_fare = joblib.load(config.ENCODER_DIR / "global_median_fare.pkl")
                 logger.info("Loaded existing Airline Brand Map.")
             else:
-                logger.warning("No Airline Brand Map found and no target 'y' provided. Using empty map.")
+                logger.warning("No Airline Brand Map found. Using empty map.")
+            
+            if os.path.exists(config.ENCODER_DIR / "ohe_encoder.pkl"):
+                self.ohe = joblib.load(config.ENCODER_DIR / "ohe_encoder.pkl")
+                logger.info("Loaded existing OneHotEncoder.")
+            else:
+                 logger.warning("No OneHotEncoder found.")
         return self
 
     def transform(self, X):
@@ -109,28 +126,59 @@ class FeatureEngineering(BaseEstimator, TransformerMixin):
         # 7. Airline Brand Value (Target Encoding Application)
         if 'airline' in df.columns:
             df['airline_brand_value'] = df['airline'].map(self.airline_brand_map).fillna(self.global_median_fare)
-            # Drop original airline column as it's now encoded
-            df.drop(columns=['airline'], inplace=True)
+            # Do NOT drop airline here, we need it for OHE below
+            # df.drop(columns=['airline'], inplace=True)
 
         # 8. Drop Leakage Columns
         leakage = ['base_fare_bdt', 'tax_and_surcharge_bdt']
         df.drop(columns=[col for col in leakage if col in df.columns], inplace=True)
         
-        # 9. Handle remaining Categorical columns (OneHot or Label)
-        # Notebook used get_dummies. We will replicate get_dummies behavior or use LabelEncoder for simplicity in RF.
-        # RF handles numeric well. Let's Label Encode remaining object columns.
+        # 9. Handle remaining Categorical columns (OneHot Encoding)
+        
+        ohe_cols = ['source', 'destination', 'aircraft_type']
+        # Filter only those present
+        ohe_cols = [c for c in ohe_cols if c in df.columns]
+        
+        if ohe_cols:
+           
+        # 9. Handle remaining Categorical columns (OneHot Encoding)
+        # Notebook used get_dummies. We will use OneHotEncoder for pipeline robustness.
+        
+        # Verify which OHE cols are present in this dataframe
+        current_ohe_cols = [c for c in self.ohe_cols if c in df.columns]
+        
+        if current_ohe_cols:
+            try:
+                # Transform
+                ohe_features = self.ohe.transform(df[current_ohe_cols])
+                # Get feature names
+                feature_names = self.ohe.get_feature_names_out(current_ohe_cols)
+                
+                # Create DataFrame
+                ohe_df = pd.DataFrame(ohe_features, columns=feature_names, index=df.index)
+                
+                # Concatenate
+                df = pd.concat([df, ohe_df], axis=1)
+                
+                # Drop original columns
+                df.drop(columns=current_ohe_cols, inplace=True)
+                
+                logger.info(f"Applied OneHotEncoding to {current_ohe_cols}. Added {len(feature_names)} features.")
+            except Exception as e:
+                logger.error(f"Error during OHE transform: {e}")
+                # Fallback or strict fail? Strict fail is better than silent degradation.
+                raise e
+
+        # Handle any other object columns that were NOT in our OHE list (fallback)
         cat_cols = df.select_dtypes(include=['object']).columns
-        for col in cat_cols:
-            # Simple label encoding for remaining cats
-            # For production, we should save these encoders. 
-            # For now implementing simple conversion.
-            # NOTE: Ideally we use a persistent encoder. 
-            # We'll rely on pd.factorize for simplicity or implement a robust one if needed.
-            # But refined_rf is robust to this.
-            labels, unique = pd.factorize(df[col])
-            df[col] = labels
+        if len(cat_cols) > 0:
+            logger.warning(f"Remaining object columns found after OHE: {cat_cols}. Applying Label Encoding fallback.")
+            for col in cat_cols:
+                labels, unique = pd.factorize(df[col])
+                df[col] = labels
             
         return df
+
 
 class DataTransformation:
     def __init__(self):
