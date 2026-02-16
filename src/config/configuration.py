@@ -24,7 +24,8 @@ class Config:
         os.makedirs(self.ENCODER_DIR, exist_ok=True)
 
         # Modeling Constants
-        self.RANDOM_STATE = 111 # As per notebook refined_rf
+        self.RANDOM_STATE = 42
         self.TARGET_COL = 'total_fare_bdt'
+        self.MODEL_VERSION = "1.0.0" 
 
 config = Config()
