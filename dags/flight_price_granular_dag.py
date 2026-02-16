@@ -38,8 +38,9 @@ def ingest_data(**kwargs):
     obj = DataIngestion()
     train_path, test_path = obj.initiate_data_ingestion()
     # Push paths to XCom for next task
-    kwargs['ti'].xcom_push(key='train_path', value=train_path)
-    kwargs['ti'].xcom_push(key='test_path', value=test_path)
+    # Convert Path objects to strings for JSON serialization
+    kwargs['ti'].xcom_push(key='train_path', value=str(train_path))
+    kwargs['ti'].xcom_push(key='test_path', value=str(test_path))
     return "Data Ingestion Completed"
 
 def transform_data(**kwargs):
