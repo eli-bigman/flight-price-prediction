@@ -7,3 +7,5 @@ artifacts
 .env
 .vscode
 !README.md
+
+notebook_code.txt
