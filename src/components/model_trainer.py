@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from src.utils.exception import CustomException
 from src.utils.logger import get_logger
 from src.config.configuration import config
@@ -25,32 +25,39 @@ class ModelTrainer:
             X_test = test_array.iloc[:, :-1]
             y_test = test_array.iloc[:, -1]
 
-            logger.info("Applying Log Transformation to Target (refined_rf logic)")
+            # 1. Target Transformation (The 'Senior' move)
+            # np.log1p is used to handle zero values safely, though fares are > 0
             y_train_log = np.log1p(y_train)
 
-            logger.info("Initializing Refined Random Forest Model")
-            # Logic from Notebook 'refined_rf'
-            model = RandomForestRegressor(
-                n_estimators=500,
-                max_depth=25,
-                max_features=None, # As explicitly requested
-                random_state=config.RANDOM_STATE,
+            # 2. Initialize the Refined Random Forest
+            # We use the deep-tree architecture that performed best in our initial run
+            refined_rf = RandomForestRegressor(
+                n_estimators=500, 
+                max_depth=25,       # Increased depth for finer detail
+                max_features=None,   # Using all features based on our heatmap analysis 
                 n_jobs=-1
             )
 
-            logger.info("Training Model...")
-            model.fit(X_train, y_train_log)
+            # 3. Train on Log-Transformed Data
+            logger.info("Training Refined Random Forest on Log-Transformed Data...")
+            refined_rf.fit(X_train, y_train_log)
 
-            logger.info("Model training complete. Evaluating on Test data...")
-            
-            # Predict
-            log_preds = model.predict(X_test)
-            
-            # Inverse Transform predictions
+            # 4. Predict and Inverse Transform
+            # We must use np.expm1 to bring the log-prices back to BDT
+            log_preds = refined_rf.predict(X_test)
             final_preds = np.expm1(log_preds)
+
+            # 5. Final Metrics
+            refined_r2 = r2_score(y_test, final_preds)
+            refined_mae = mean_absolute_error(y_test, final_preds)
+            refined_rmse = np.sqrt(mean_squared_error(y_test, final_preds))
             
-            r2 = r2_score(y_test, final_preds)
-            logger.info(f"Model R2 Score: {r2}")
+            logger.info(f"Model R2 Score: {refined_r2}")
+            logger.info(f"Model MAE: {refined_mae}")
+            logger.info(f"Model RMSE: {refined_rmse}")
+            
+            model = refined_rf # Assign to model for saving
+            r2 = refined_r2
 
             # Save Model
             joblib.dump(model, self.model_path)
