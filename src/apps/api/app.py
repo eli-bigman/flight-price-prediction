@@ -3,10 +3,21 @@ from pydantic import BaseModel
 import uvicorn
 from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 from src.utils.logger import get_logger
+import os
+import datetime
+from sqlalchemy import create_engine, insert, Table, MetaData
+from src.components.db_setup import init_db, prediction_logs, DATABASE_URL
 
 logger = get_logger(__name__)
 
 app = FastAPI(title="Flight Price Prediction API", version="1.0.0")
+
+# Database Setup
+engine = create_engine(DATABASE_URL)
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 class FlightInput(BaseModel):
     airline: str
@@ -24,6 +35,13 @@ class FlightInput(BaseModel):
 @app.get("/")
 def home():
     return {"message": "Flight Price Prediction API is Running!"}
+
+def get_model_refined_date(model_path):
+    try:
+        timestamp = os.path.getmtime(model_path)
+        return datetime.datetime.fromtimestamp(timestamp)
+    except Exception:
+        return None
 
 @app.post("/predict")
 def predict_flight_price(flight: FlightInput):
@@ -51,6 +69,33 @@ def predict_flight_price(flight: FlightInput):
         
         result = round(float(pred[0]), 2)
         logger.info(f"Prediction success: {result}")
+
+        # 3. Log to Database
+        try:
+            refined_date = get_model_refined_date(predict_pipeline.model_path)
+            
+            stmt = insert(prediction_logs).values(
+                request_timestamp=datetime.datetime.utcnow(),
+                source=flight.source,
+                destination=flight.destination,
+                airline=flight.airline,
+                departure_time=flight.departure_time,
+                arrival_time=flight.arrival_time,
+                duration_hrs=flight.duration_hrs,
+                total_stops=flight.total_stops,
+                seasonality=flight.seasonality,
+                days_before_departure=flight.days_before_departure,
+                aircraft_type=flight.aircraft_type,
+                travel_class=flight.travel_class,
+                predicted_price=result,
+                model_refined_at=refined_date
+            )
+            with engine.connect() as conn:
+                conn.execute(stmt)
+                conn.commit()
+            logger.info("Prediction logged to database.")
+        except Exception as db_e:
+            logger.error(f"Failed to log to DB: {db_e}")
         
         return {"predicted_price": result}
 
