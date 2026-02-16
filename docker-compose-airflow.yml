@@ -1,13 +1,4 @@
 services:
-  postgres:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - postgres-db-volume:/var/lib/postgresql/data
-
   airflow-webserver:
     build:
       context: .
@@ -16,12 +7,10 @@ services:
     command: webserver
     ports:
       - "8080:8080"
-    depends_on:
-      - postgres
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
       - AIRFLOW__CORE__FERNET_KEY=${AIRFLOW_FERNET_KEY}
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW_CONN_FS_DEFAULT=fs
@@ -32,6 +21,9 @@ services:
       - ./artifacts:/opt/airflow/artifacts
       - ./data:/opt/airflow/data
       - ./logs:/opt/airflow/logs
+      - ./models:/opt/airflow/models
+    networks:
+      - flight_network
 
   airflow-scheduler:
     build:
@@ -39,12 +31,10 @@ services:
       dockerfile: Dockerfile.airflow
     restart: always
     command: scheduler
-    depends_on:
-      - postgres
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
       - AIRFLOW__CORE__FERNET_KEY=${AIRFLOW_FERNET_KEY}
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - PYTHONPATH=/opt/airflow
@@ -54,22 +44,25 @@ services:
       - ./artifacts:/opt/airflow/artifacts
       - ./data:/opt/airflow/data
       - ./logs:/opt/airflow/logs
+    networks:
+      - flight_network
 
   airflow-init:
     build:
       context: .
       dockerfile: Dockerfile.airflow
-    depends_on:
-      - postgres
     environment:
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://${POSTGRES_USER:-airflow}:${POSTGRES_PASSWORD:-airflow}@flight-price-db/${POSTGRES_DB:-airflow}
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - _AIRFLOW_DB_UPGRADE=true
       - _AIRFLOW_WWW_USER_CREATE=true
-      - _AIRFLOW_WWW_USER_USERNAME=${AIRFLOW_WWW_USER_USERNAME}
-      - _AIRFLOW_WWW_USER_PASSWORD=${AIRFLOW_WWW_USER_PASSWORD}
+      - _AIRFLOW_WWW_USER_USERNAME=${AIRFLOW_WWW_USER_USERNAME:-admin}
+      - _AIRFLOW_WWW_USER_PASSWORD=${AIRFLOW_WWW_USER_PASSWORD:-admin}
     command: version
+    networks:
+      - flight_network
 
-volumes:
-  postgres-db-volume:
+networks:
+  flight_network:
+    external: true
