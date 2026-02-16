@@ -28,8 +28,7 @@ graph TD
         subgraph Infrastructure ["Tier 1: Infrastructure (Always On)"]
             style Infrastructure fill:#e1f5fe,stroke:#01579b,stroke-width:2px
             DB[("<b>Postgres DB</b><br><i>(flights_db)</i>")]
-            Vol[("Docker Volume<br><i>(db_data)</i>")]
-            DB --- Vol
+           
         end
 
         subgraph AppStack ["Tier 2: Application (Always On)"]
