@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./models:/app/models
+      - ./artifacts:/app/artifacts
       # Mount src for development reloading (optional)
       # - ./src:/app/src 
     environment:
@@ -26,7 +26,7 @@ services:
     depends_on:
       - api
     volumes:
-      - ./models:/app/models
+      - ./artifacts:/app/artifacts
     networks:
       - flight_network
 
