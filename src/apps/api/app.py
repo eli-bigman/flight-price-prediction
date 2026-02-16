@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import uvicorn
 from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 from src.utils.logger import get_logger
+from src.config.configuration import config
 import os
 import datetime
 from sqlalchemy import create_engine, insert, Table, MetaData
@@ -88,7 +89,8 @@ def predict_flight_price(flight: FlightInput):
                 aircraft_type=flight.aircraft_type,
                 travel_class=flight.travel_class,
                 predicted_price=result,
-                model_refined_at=refined_date
+                model_refined_at=refined_date,
+                model_version=config.MODEL_VERSION
             )
             with engine.connect() as conn:
                 conn.execute(stmt)
