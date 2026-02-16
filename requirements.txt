@@ -13,3 +13,5 @@ requests
 streamlit
 tenacity
 apache-airflow-providers-cncf-kubernetes
+sqlalchemy 
+psycopg2-binary
