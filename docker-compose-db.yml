@@ -11,6 +11,21 @@ services:
       - postgres-db-volume:/var/lib/postgresql/data
     networks:
       - flight_network
+    
+  # Observability Stack
+  dbgate:
+    image: dbgate/dbgate
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=${POSTGRES_USER:-airflow}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-airflow}
+      - DB_HOST=${POSTGRES_HOST:-postgres}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+      - DB_NAME=${POSTGRES_DB:-airflow}
+    networks:
+      - flight_network
 
 volumes:
   postgres-db-volume:
@@ -18,3 +33,5 @@ volumes:
 networks:
   flight_network:
     external: true
+
+
