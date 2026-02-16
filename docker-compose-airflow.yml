@@ -15,13 +15,15 @@ services:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW_CONN_FS_DEFAULT=fs
       - PYTHONPATH=/opt/airflow
+    depends_on:
+      - init-artifacts
+      - airflow-init
     volumes:
       - ./dags:/opt/airflow/dags
       - ./src:/opt/airflow/src
       - ./artifacts:/opt/airflow/artifacts
       - ./data:/opt/airflow/data
       - ./logs:/opt/airflow/logs
-      - ./models:/opt/airflow/models
     networks:
       - flight_network
 
@@ -46,6 +48,8 @@ services:
       - ./logs:/opt/airflow/logs
     networks:
       - flight_network
+    depends_on:
+      - init-artifacts
 
   airflow-init:
     build:
@@ -60,6 +64,16 @@ services:
       - _AIRFLOW_WWW_USER_USERNAME=${AIRFLOW_WWW_USER_USERNAME:-admin}
       - _AIRFLOW_WWW_USER_PASSWORD=${AIRFLOW_WWW_USER_PASSWORD:-admin}
     command: version
+    networks:
+      - flight_network
+
+  init-artifacts:
+    image: apache/airflow:2.7.3
+    user: root
+    entrypoint: /bin/bash
+    command: -c "mkdir -p /opt/airflow/artifacts/models/encoders && chmod -R 777 /opt/airflow/artifacts"
+    volumes:
+      - ./artifacts:/opt/airflow/artifacts
     networks:
       - flight_network
 
