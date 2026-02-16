@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: flight-price-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-airflow}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-airflow}
+      - POSTGRES_DB=${POSTGRES_DB:-airflow}
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    networks:
+      - flight_network
+
+volumes:
+  postgres-db-volume:
+
+networks:
+  flight_network:
+    external: true
