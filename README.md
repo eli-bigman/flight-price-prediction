@@ -22,36 +22,6 @@ The pipeline adopts a **Three-Tier Docker Architecture** to decouple the infrast
 
 ![Architecture](image.png)
 
-```mermaid
-graph TD
-    subgraph Network ["Docker Network: flight_network"]
-        style Network fill:#f5f5f5,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
-
-        subgraph Infrastructure ["Tier 1: Infrastructure (Always On)"]
-            style Infrastructure fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-            DB[("<b>Postgres DB</b><br><i>(flights_db)</i>")]
-           
-        end
-
-        subgraph AppStack ["Tier 2: Application (Always On)"]
-            style AppStack fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-            UI["<b>Streamlit UI</b><br>(Port 8501)"]
-            API["<b>FastAPI Backend</b><br>(Port 8000)"]
-
-            UI -->|"HTTP /predict"| API
-            API -->|"SQL Queries"| DB
-        end
-
-        subgraph JobStack ["Tier 3: Orchestration (On Demand)"]
-            style JobStack fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
-            Web["<b>Airflow Webserver</b><br>(Port 8080)"]
-            Sch["<b>Airflow Scheduler</b>"]
-
-            Web -.-|"Metadata Read/Write"| DB
-            Sch -.-|"Metadata Read/Write"| DB
-        end
-    end
-```
 
 ## Technology Stack
 
