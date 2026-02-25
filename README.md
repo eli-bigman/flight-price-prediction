@@ -1,12 +1,12 @@
 # Flight Price Prediction: End-to-End Machine Learning Pipeline
 
-## ✈️ Executive Summary
+## Executive Summary
 
 The **Flight Price Prediction** project is a robust, end-to-end machine learning solution designed to estimate flight fares based on various travel factors. By analyzing historical flight data from Bangladesh, this project identifies key drivers of ticket prices—such as airline, route, departure time, and class—and builds predictive models to assist travelers and businesses in making informed decisions.
 
 The project simulates a professional data science workflow, encompassing data ingestion, rigorous cleaning, advanced feature engineering, and the training of multiple regression models to achieve high accuracy.
 
-## ✨ Key Features
+## Key Features
 
 - **Comprehensive Data Processing**: Automated cleaning pipeline handling missing values, outliers, and data type standardization.
 - **Advanced Feature Engineering**: Creation of derived features like 'Day of Week', 'Journey Month', and seasonality indicators to capture temporal pricing trends.
@@ -16,7 +16,7 @@ The project simulates a professional data science workflow, encompassing data in
 - **Workflow Orchestration**: Design for an Airflow-managed pipeline (conceptually mapped) for automated data flow.
 - **Containerization Ready**: Infrastructure design supports Docker for reproducible environments.
 
-## 🏗️ Architecture & Workflow
+## Architecture & Workflow
 
 The pipeline adopts a **Three-Tier Docker Architecture** to decouple the infrastructure, application, and orchestration layers. This ensures the database and app remain available even when the training jobs (Airflow) are not running.
 
@@ -53,7 +53,7 @@ graph TD
     end
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Programming Language**: Python 3.12+
 - **Data Manipulation**: Pandas, NumPy
@@ -63,7 +63,7 @@ graph TD
 - **Containerization**: Docker, Docker Compose
 - **Notebook Environment**: Jupyter / VS Code
 
-## 📊 Dataset Details
+## Dataset Details
 
 The project utilizes the **Flight Price Dataset of Bangladesh**.
 
@@ -77,7 +77,7 @@ The project utilizes the **Flight Price Dataset of Bangladesh**.
   - `Class`: Economy, Business.
   - `Total Fare`: Target variable (Price in BDT).
 
-## 🧠 Methodology
+## Methodology
 
 ### 1. Data Cleaning & Preprocessing
 
@@ -111,7 +111,7 @@ We trained multiple regression models to find the best fit:
 - **MAE (Mean Absolute Error)**
 - **R² Score**
 
-## 📡 Prediction Logging & Monitoring
+## Prediction Logging & Monitoring
 
 The application now includes a production-grade logging system. Every request to the `/predict` endpoint is saved to the **`prediction_logs`** table in the Postgres database.
 
@@ -127,7 +127,7 @@ The application now includes a production-grade logging system. Every request to
 2.  **Data Drift**: Shift in user inputs compared to training data.
 3.  **Model Performance**: Track predictions over time.
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 flight-price-prediction/
@@ -151,7 +151,7 @@ flight-price-prediction/
 └── README.md               # Project documentation
 ```
 
-## 🚀 Installation & Usage
+## Installation & Usage
 
 ### Prerequisites
 
@@ -218,22 +218,22 @@ This project uses a modular Docker setup. Follow the order below:
     jupyter notebook notebooks/notebook.ipynb
     ```
 
-## 📈 Results & Insights
+## Results & Insights
 
 - **Price Determinants**: `Class` (Economy vs. Business) and `Duration` were found to be the strongest predictors of price.
 - **Airline Variance**: Specific airlines commanded a premium regardless of route.
 - **Model Performance**: XGBoost outperformed Linear Regression by a significant margin, achieving an R² score of ~0.85 (illustrative).
 
-## 🔮 Future Work
+## Future Work
 
 - [ ] **Hyperparameter Tuning**: Use Optuna for deeper optimization of XGBoost parameters.
 - [ ] **Deployment**: Serve the model via a FastAPI endpoint.
 - [ ] **Dashboard**: Build a Streamlit app for users to check predicted prices.
 
-## 🤝 Contributors
+## Contributors
 
 - **Richard Elinam Nutsuga** - _Project Lead & Developer_
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
